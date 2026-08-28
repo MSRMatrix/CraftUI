@@ -1,19 +1,9 @@
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { RouterProvider } from "react-router-dom";
 import "../styles/app.css";
-import AppShell from "../layout/AppShell";
+import { router } from "./router";
 
 function App() {
-  const router = createBrowserRouter([
-    {
-      path: "/",
-      element: <AppShell />,
-      children: [],
-    },
-    {
-      path: "*",
-      element: <AppShell />,
-    },
-  ]);
+
 
   return (
     <>
