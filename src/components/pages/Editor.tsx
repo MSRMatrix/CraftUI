@@ -1,23 +1,28 @@
-import { useRef, useState } from "react";
-import type { DragEvent } from "react";
-import type { DropType, EditorElement, HtmlElement } from "../../types/editor";
+import { useState, type DragEvent } from "react";
+
+import type {
+  EditorElement,
+  HtmlElement,
+} from "../../types/editor";
+
+import useEditor from "../../services/useEditor";
 
 const Editor = () => {
-  const [editorArray, setEditorArray] = useState<
-    EditorElement[]
-  >([]);
-
   /*
    * ==========================================
-   * ID
+   * EDITOR LOGIK
    * ==========================================
-   *
-   * useRef speichert die aktuelle ID,
-   * ohne bei jeder Änderung einen Render
-   * auszulösen.
    */
 
-  const currentId = useRef(0);
+  const {
+    editorArray,
+    handleDragStart,
+    handleDragOver,
+    handleDrop,
+    generateHtml,
+    deleteElement,
+    updateElementContent,
+  } = useEditor();
 
   /*
    * ==========================================
@@ -45,231 +50,47 @@ const Editor = () => {
 
   /*
    * ==========================================
-   * DRAG START
+   * EDITOR STATE
    * ==========================================
    */
 
-  const handleDragStart = (
-    event: DragEvent<HTMLDivElement>,
-    element: HtmlElement,
-  ) => {
-    event.dataTransfer.setData(
-      "element",
-      element,
-    );
-  };
+  const [selectedElement, setSelectedElement] =
+    useState<number | null>(null);
+
+  const [openEditor, setOpenEditor] =
+    useState(false);
+
+  const [content, setContent] =
+    useState("");
 
   /*
    * ==========================================
-   * DRAG OVER
+   * ELEMENT AUSWÄHLEN
    * ==========================================
    */
 
-  const handleDragOver = (
-    event: DragEvent<HTMLDivElement>,
-  ) => {
-    event.preventDefault();
-  };
-
-  /*
-   * ==========================================
-   * ELEMENT HINZUFÜGEN
-   * ==========================================
-   */
-
-  const addElement = (
-    elements: EditorElement[],
-    targetId: number,
-    newElement: EditorElement,
-    dropType: DropType,
-  ): EditorElement[] => {
-    return elements.flatMap((element) => {
-      /*
-       * Ziel gefunden
-       */
-
-      if (element.id === targetId) {
-        /*
-         * ==============================
-         * INSIDE
-         * ==============================
-         */
-
-        if (dropType === "inside") {
-          return [
-            {
-              ...element,
-              children: [
-                ...element.children,
-                newElement,
-              ],
-            },
-          ];
-        }
-
-        /*
-         * ==============================
-         * BEFORE
-         * ==============================
-         */
-
-        if (dropType === "before") {
-          return [
-            newElement,
-            element,
-          ];
-        }
-
-        /*
-         * ==============================
-         * AFTER
-         * ==============================
-         */
-
-        if (dropType === "after") {
-          return [
-            element,
-            newElement,
-          ];
-        }
-      }
-
-      /*
-       * ==============================
-       * REKURSIV IN KINDERN SUCHEN
-       * ==============================
-       */
-
-      return [
-        {
-          ...element,
-          children: addElement(
-            element.children,
-            targetId,
-            newElement,
-            dropType,
-          ),
-        },
-      ];
-    });
-  };
-
-  /*
-   * ==========================================
-   * DROP
-   * ==========================================
-   */
-
-  const handleDrop = (
-    event: DragEvent<HTMLDivElement>,
-    targetId?: number,
-    dropType?: DropType,
-  ) => {
-    event.preventDefault();
-
-    /*
-     * Verhindert, dass das Drop-Event
-     * zusätzlich an die Canvas weitergegeben wird.
-     */
-
-    event.stopPropagation();
-
-    const element = event.dataTransfer.getData(
-      "element",
-    ) as HtmlElement;
-
-    if (!element) {
-      return;
-    }
-
-    /*
-     * Neue ID erzeugen
-     */
-
-    const newElement: EditorElement = {
-      id: ++currentId.current,
-      elementName: element,
-      className: "",
-      content: "",
-      children: [],
-    };
-
-    /*
-     * ======================================
-     * KEIN ZIEL
-     * ======================================
-     *
-     * Element kommt auf die oberste Ebene.
-     */
-
-    if (!targetId || !dropType) {
-      setEditorArray((prev) => [
-        ...prev,
-        newElement,
-      ]);
-
-      return;
-    }
-
-    /*
-     * ======================================
-     * ELEMENT EINFÜGEN
-     * ======================================
-     */
-
-    setEditorArray((prev) =>
-      addElement(
-        prev,
-        targetId,
-        newElement,
-        dropType,
-      ),
-    );
-  };
-
-  /*
-   * ==========================================
-   * HTML GENERIEREN
-   * ==========================================
-   */
-
-  const generateHtml = (
+  const selectElement = (
     element: EditorElement,
-  ): string => {
-    /*
-     * Class-Attribut erzeugen
-     */
+  ) => {
+    setSelectedElement(element.id);
+    setContent(element.content);
+    setOpenEditor(true);
+  };
 
-    const classAttribute =
-      element.className
-        ? ` class="${element.className}"`
-        : "";
+  /*
+   * ==========================================
+   * CONTENT ÄNDERN
+   * ==========================================
+   */
 
-    /*
-     * Kinder in HTML umwandeln
-     */
-
-    const children = element.children
-      .map((child) =>
-        generateHtml(child),
-      )
-      .join("");
-
-    /*
-     * IMG besitzt keinen schließenden Tag.
-     */
-
-    if (
-      element.elementName === "img"
-    ) {
-      return `<img${classAttribute}>`;
-    }
-
-    /*
-     * Normale HTML-Elemente
-     */
-
-    return `<${element.elementName}${classAttribute}>${element.content}${children}</${element.elementName}>`;
+  const changeElementContent = (
+    id: number,
+    newContent: string,
+  ) => {
+    updateElementContent(
+      id,
+      newContent,
+    );
   };
 
   /*
@@ -295,7 +116,9 @@ const Editor = () => {
         <div
           className="drop-zone drop-before"
           onDragOver={handleDragOver}
-          onDrop={(event) =>
+          onDrop={(
+            event: DragEvent<HTMLDivElement>,
+          ) =>
             handleDrop(
               event,
               element.id,
@@ -312,10 +135,29 @@ const Editor = () => {
          * ==================================
          */}
 
-        <div className="element-box">
+        <div
+          className="element-box"
+          onClick={() =>
+            selectElement(element)
+          }
+        >
+          {/*
+           * ELEMENT LABEL
+           */}
+
           <div className="element-label">
             &lt;{element.elementName}&gt;
           </div>
+
+          {/*
+           * CONTENT
+           */}
+
+          {element.content && (
+            <div className="element-content">
+              {element.content}
+            </div>
+          )}
 
           {/*
            * ==================================
@@ -327,24 +169,51 @@ const Editor = () => {
             <div
               className="drop-zone drop-inside"
               onDragOver={handleDragOver}
-              onDrop={(event) =>
+              onDrop={(
+                event: DragEvent<HTMLDivElement>,
+              ) => {
                 handleDrop(
                   event,
                   element.id,
                   "inside",
-                )
-              }
+                );
+              }}
             >
-              {element.children.length ===
-              0 ? (
-                "Hier hineinziehen"
-              ) : (
-                element.children.map(
-                  renderElement,
-                )
-              )}
+              {element.children.length === 0
+                ? "Hier hineinziehen"
+                : element.children.map(
+                    renderElement,
+                  )}
             </div>
           )}
+
+          {/*
+           * ==================================
+           * DELETE
+           * ==================================
+           */}
+
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+
+              deleteElement(
+                element.id,
+              );
+
+              if (
+                selectedElement ===
+                element.id
+              ) {
+                setSelectedElement(null);
+                setOpenEditor(false);
+                setContent("");
+              }
+            }}
+          >
+            Löschen
+          </button>
         </div>
 
         {/*
@@ -356,7 +225,9 @@ const Editor = () => {
         <div
           className="drop-zone drop-after"
           onDragOver={handleDragOver}
-          onDrop={(event) =>
+          onDrop={(
+            event: DragEvent<HTMLDivElement>,
+          ) =>
             handleDrop(
               event,
               element.id,
@@ -393,7 +264,9 @@ const Editor = () => {
             key={item}
             className="div-elements"
             draggable
-            onDragStart={(event) =>
+            onDragStart={(
+              event: DragEvent<HTMLDivElement>,
+            ) =>
               handleDragStart(
                 event,
                 item,
@@ -414,14 +287,16 @@ const Editor = () => {
       <div
         className="editor-canvas"
         onDragOver={handleDragOver}
-        onDrop={(event) =>
+        onDrop={(
+          event: DragEvent<HTMLDivElement>,
+        ) =>
           handleDrop(event)
         }
       >
         {editorArray.length === 0 && (
           <p>
-            Ziehe ein HTML-Element hier
-            hinein.
+            Ziehe ein HTML-Element
+            hier hinein.
           </p>
         )}
 
@@ -432,22 +307,95 @@ const Editor = () => {
 
       {/*
        * ======================================
-       * HTML AUSGABE
+       * ELEMENT EDITOR
+       * ======================================
+       */}
+
+      <div className="element-editor">
+
+        <h2>Element bearbeiten</h2>
+
+        {selectedElement === null ? (
+          <p>
+            Wähle ein Element aus.
+          </p>
+        ) : (
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+
+              if (
+                selectedElement === null
+              ) {
+                return;
+              }
+
+              changeElementContent(
+                selectedElement,
+                content,
+              );
+
+              setOpenEditor(false);
+            }}
+          >
+            {/*
+             * ==================================
+             * TEXT EDITOR
+             * ==================================
+             */}
+
+            <button
+              type="button"
+              onClick={() =>
+                setOpenEditor(
+                  !openEditor,
+                )
+              }
+            >
+              Text einfügen
+            </button>
+
+            {openEditor && (
+              <>
+                <input
+                  type="text"
+                  value={content}
+                  onChange={(event) =>
+                    setContent(
+                      event.target.value,
+                    )
+                  }
+                />
+
+                <button type="submit">
+                  Ändern
+                </button>
+              </>
+            )}
+          </form>
+        )}
+      </div>
+
+      {/*
+       * ======================================
+       * HTML VORSCHAU
        * ======================================
        */}
 
       <div className="editor-window">
-        <h2>HTML</h2>
+        <h2>Vorschau</h2>
 
-        <pre>
-          {editorArray
-            .map((element) =>
-              generateHtml(element),
-            )
-            .join("\n")}
-        </pre>
+        <div
+          className="preview"
+          dangerouslySetInnerHTML={{
+            __html: editorArray
+              .map((element) =>
+                generateHtml(element),
+              )
+              .join(""),
+          }}
+        />
       </div>
-
     </div>
   );
 };
