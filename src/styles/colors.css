@@ -1,0 +1,76 @@
+:root {
+  /* ==========================================
+     WEISS
+     ========================================== */
+
+  --color-white: #ffffff;
+  --color-white-soft: #faf9ff;
+  --color-white-warm: #fdfcff;
+
+
+  /* ==========================================
+     SEHR HELLES VIOLETT
+     ========================================== */
+
+  --color-violet-50: #f9f7ff;
+  --color-violet-100: #f4f0ff;
+  --color-violet-150: #eee9ff;
+  --color-violet-200: #e8e1ff;
+
+
+  /* ==========================================
+     WEICHES VIOLETT
+     ========================================== */
+
+  --color-violet-300: #ddd3ff;
+  --color-violet-400: #cbbcff;
+  --color-violet-500: #b8a5f5;
+
+
+  /* ==========================================
+     KRÄFTIGERES VIOLETT
+     ========================================== */
+
+  --color-violet-600: #9b84e8;
+  --color-violet-700: #8066d6;
+  --color-violet-800: #684bbd;
+
+
+  /* ==========================================
+     TEXT
+     ========================================== */
+
+  --color-text: #302b3d;
+  --color-text-soft: #625b70;
+  --color-text-muted: #8b8499;
+
+
+  /* ==========================================
+     GRAU / BORDER
+     ========================================== */
+
+  --color-border: #e7e3ed;
+  --color-border-violet: #ddd6ee;
+  --color-background: #f8f7fa;
+
+
+  /* ==========================================
+     SCHATTEN
+     ========================================== */
+
+  --shadow-soft:
+    0 4px 20px rgba(80, 60, 120, 0.06);
+
+  --shadow-medium:
+    0 8px 30px rgba(80, 60, 120, 0.10);
+
+
+  /* ==========================================
+     AKZENTE
+     ========================================== */
+
+  --color-primary: #9b84e8;
+  --color-primary-light: #eee9ff;
+  --color-primary-soft: #f6f3ff;
+  --color-primary-dark: #8066d6;
+}

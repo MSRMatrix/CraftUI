@@ -6,6 +6,8 @@ import type {
 } from "../../types/editor";
 
 import useEditor from "../../services/useEditor";
+import Preview from "./editor/Preview";
+import ElementEditor from "./editor/ElementEditor";
 
 const Editor = () => {
   /*
@@ -22,6 +24,7 @@ const Editor = () => {
     generateHtml,
     deleteElement,
     updateElementContent,
+    updateElementClassName
   } = useEditor();
 
   /*
@@ -187,6 +190,93 @@ const Editor = () => {
             </div>
           )}
 
+
+<div className="element-editor">
+  <h2>Element bearbeiten</h2>
+
+  {selectedElement === null ? (
+    <p>
+      Wähle ein Element aus.
+    </p>
+  ) : (
+    <form
+      onSubmit={(event) => {
+        event.preventDefault();
+
+        if (selectedElement === null) {
+          return;
+        }
+
+        changeElementContent(
+          selectedElement,
+          content,
+        );
+
+        setOpenEditor(false);
+      }}
+    >
+      {/* ==================================
+          TEXT EDITOR
+          ================================== */}
+
+      <button
+        type="button"
+        onClick={() =>
+          setOpenEditor(!openEditor)
+        }
+      >
+        Text einfügen
+      </button>
+
+      {openEditor && (
+        <>
+          <input
+            type="text"
+            value={content}
+            onChange={(event) =>
+              setContent(
+                event.target.value,
+              )
+            }
+          />
+
+          <button type="submit">
+            Ändern
+          </button>
+        </>
+      )}
+
+      {/* ==================================
+          CLASSNAME EDITOR
+          ================================== */}
+
+      <div className="class-editor">
+        <label htmlFor="className">
+          Klassenname
+        </label>
+
+        <input
+          id="className"
+          type="text"
+          value={
+            editorArray.find(
+              (element) =>
+                element.id ===
+                selectedElement,
+            )?.className ?? ""
+          }
+          onChange={(event) => {
+            updateElementClassName(
+              selectedElement,
+              event.target.value,
+            );
+          }}
+        />
+      </div>
+    </form>
+  )}
+</div>
+
           {/*
            * ==================================
            * DELETE
@@ -247,6 +337,9 @@ const Editor = () => {
    * ==========================================
    */
 
+  const selectedEditorElement = editorArray.find(
+  (element) => element.id === selectedElement,
+);
   return (
     <div className="editor">
 
@@ -305,97 +398,18 @@ const Editor = () => {
         )}
       </div>
 
-      {/*
-       * ======================================
-       * ELEMENT EDITOR
-       * ======================================
-       */}
+     <ElementEditor
+  selectedElement={selectedEditorElement}
+  updateElementContent={updateElementContent}
+  updateElementClassName={
+    updateElementClassName
+  }
+/>
 
-      <div className="element-editor">
-
-        <h2>Element bearbeiten</h2>
-
-        {selectedElement === null ? (
-          <p>
-            Wähle ein Element aus.
-          </p>
-        ) : (
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-
-              if (
-                selectedElement === null
-              ) {
-                return;
-              }
-
-              changeElementContent(
-                selectedElement,
-                content,
-              );
-
-              setOpenEditor(false);
-            }}
-          >
-            {/*
-             * ==================================
-             * TEXT EDITOR
-             * ==================================
-             */}
-
-            <button
-              type="button"
-              onClick={() =>
-                setOpenEditor(
-                  !openEditor,
-                )
-              }
-            >
-              Text einfügen
-            </button>
-
-            {openEditor && (
-              <>
-                <input
-                  type="text"
-                  value={content}
-                  onChange={(event) =>
-                    setContent(
-                      event.target.value,
-                    )
-                  }
-                />
-
-                <button type="submit">
-                  Ändern
-                </button>
-              </>
-            )}
-          </form>
-        )}
-      </div>
-
-      {/*
-       * ======================================
-       * HTML VORSCHAU
-       * ======================================
-       */}
-
-      <div className="editor-window">
-        <h2>Vorschau</h2>
-
-        <div
-          className="preview"
-          dangerouslySetInnerHTML={{
-            __html: editorArray
-              .map((element) =>
-                generateHtml(element),
-              )
-              .join(""),
-          }}
-        />
-      </div>
+      <Preview
+        editorArray={editorArray}
+        generateHtml={generateHtml}
+      />
     </div>
   );
 };

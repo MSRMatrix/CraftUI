@@ -362,6 +362,35 @@ const updateElementContent = (
     return updateChildren(prev);
   });
 };
+
+const updateElementClassName = (
+  id: number,
+  className: string,
+) => {
+  setEditorArray((prev) => {
+    const updateChildren = (
+      elements: EditorElement[],
+    ): EditorElement[] => {
+      return elements.map((element) => {
+        if (element.id === id) {
+          return {
+            ...element,
+            className,
+          };
+        }
+
+        return {
+          ...element,
+          children: updateChildren(
+            element.children,
+          ),
+        };
+      });
+    };
+
+    return updateChildren(prev);
+  });
+};
   return {
     editorArray,
     handleDragStart,
@@ -369,7 +398,8 @@ const updateElementContent = (
     handleDrop,
     generateHtml,
     deleteElement,
-    updateElementContent
+    updateElementContent,
+    updateElementClassName
   };
 };
 

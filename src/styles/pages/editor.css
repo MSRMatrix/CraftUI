@@ -3,3 +3,9 @@
     height: 200px;
     background-color: aliceblue;
 }
+
+.editor-canvas{
+    background-color: cyan;
+    width: 200px;
+    height: 200px;
+}
